@@ -37,52 +37,54 @@ async function captureHeatMap(url) {
 	}
 }
 
-async function sendLatestImage(webhookUrl) {
-    const imagesDir = path.join(__dirname, 'images');
+async function sendLatestImage(chart_url, webhookUrl) {
+	await captureHeatMap(chart_url);
 
-    // Check if the 'images' directory exists
-    if (!fs.existsSync(imagesDir)) {
-        console.error('Images directory does not exist.');
-        return;
-    }
+  const imagesDir = path.join(__dirname, 'images');
 
-    // Read the 'images' directory
-    const files = fs.readdirSync(imagesDir).filter(file => file.endsWith('.png'));
+  // Check if the 'images' directory exists
+  if (!fs.existsSync(imagesDir)) {
+      console.error('Images directory does not exist.');
+      return;
+  }
 
-    // Sort files by creation time
-    const sortedFiles = files.map(filename => {
-        return {
-            name: filename,
-            time: fs.statSync(path.join(imagesDir, filename)).mtime.getTime()
-        };
-    }).sort((a, b) => b.time - a.time); // Sort descending
+  // Read the 'images' directory
+  const files = fs.readdirSync(imagesDir).filter(file => file.endsWith('.png'));
 
-    // Get the latest file
-    if (sortedFiles.length === 0) {
-        console.error('No PNG files found in the images directory.');
-        return;
-    }
-    const latestFile = sortedFiles[0].name;
+  // Sort files by creation time
+  const sortedFiles = files.map(filename => {
+      return {
+          name: filename,
+          time: fs.statSync(path.join(imagesDir, filename)).mtime.getTime()
+      };
+  }).sort((a, b) => b.time - a.time); // Sort descending
 
-    // Prepare the payload
-    const filePath = path.join(imagesDir, latestFile);
-    const fileContent = fs.readFileSync(filePath);
-    const formData = new FormData();
-    formData.append('file', fileContent, latestFile);
+  // Get the latest file
+  if (sortedFiles.length === 0) {
+      console.error('No PNG files found in the images directory.');
+      return;
+  }
+  const latestFile = sortedFiles[0].name;
 
-		try {
-			const response = await axios.post(webhookUrl, formData, {
-				headers: formData.getHeaders()
-			});
-			console.log('File sent successfully:', response.statusText);
-		} catch (error) {
-			console.error('Error sending file:', error.message);
-		}
+  // Prepare the payload
+  const filePath = path.join(imagesDir, latestFile);
+  const fileContent = fs.readFileSync(filePath);
+  const formData = new FormData();
+  formData.append('file', fileContent, latestFile);
+
+	try {
+		const response = await axios.post(webhookUrl, formData, {
+			headers: formData.getHeaders()
+		});
+		console.log('File sent successfully:', response.statusText);
+	} catch (error) {
+		console.error('Error sending file:', error.message);
+	}
 }
 
-captureHeatMap('https://finviz.com/map.ashx?t=etf');
 webhook_url = process.env.WEBHOOK_URL;
-sendLatestImage(webhook_url)
+
+sendLatestImage('https://finviz.com/map.ashx?t=sec', webhook_url)
 .then(() => {
     console.log('Operation completed, exiting script.');
     process.exit(0); // Exits the process successfully
