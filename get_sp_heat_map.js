@@ -17,7 +17,7 @@ async function captureHeatMap(url) {
 	driver = await new Builder().forBrowser('chrome').setChromeOptions(options).build();
 
 	try {
-		await driver.get('https://finviz.com/map.ashx');
+		await driver.get(url);
 
 		await driver.executeScript("window.scrollBy(0, 150)");
 
@@ -27,10 +27,11 @@ async function captureHeatMap(url) {
 		let screenshot = await canvasElement.takeScreenshot();
 
 		// Save the screenshot to a file
-		const now = new Date();
-		const timestamp = now.toISOString().replace(/:/g, '-').replace('T', '-').split('.')[0];
+		// const now = new Date();
+		// const timestamp = now.toISOString().replace(/:/g, '-').replace('T', '-').split('.')[0];
 
-		fs.writeFileSync(`images/SP_500_heatmap_${timestamp}.png`, screenshot, 'base64');
+		// fs.writeFileSync(`images/SP_500_heatmap_${timestamp}.png`, screenshot, 'base64');
+		return screenshot;
 	}
 	finally {
 		await driver.quit();
@@ -38,39 +39,40 @@ async function captureHeatMap(url) {
 }
 
 async function sendLatestImage(chart_url, webhookUrl) {
-	await captureHeatMap(chart_url);
+	let screenshotBase64 = await captureHeatMap(chart_url);
 
-  const imagesDir = path.join(__dirname, 'images');
+  // const imagesDir = path.join(__dirname, 'images');
 
   // Check if the 'images' directory exists
-  if (!fs.existsSync(imagesDir)) {
-      console.error('Images directory does not exist.');
-      return;
-  }
+  // if (!fs.existsSync(imagesDir)) {
+  //     console.error('Images directory does not exist.');
+  //     return;
+  // }
 
   // Read the 'images' directory
-  const files = fs.readdirSync(imagesDir).filter(file => file.endsWith('.png'));
+  // const files = fs.readdirSync(imagesDir).filter(file => file.endsWith('.png'));
 
   // Sort files by creation time
-  const sortedFiles = files.map(filename => {
-      return {
-          name: filename,
-          time: fs.statSync(path.join(imagesDir, filename)).mtime.getTime()
-      };
-  }).sort((a, b) => b.time - a.time); // Sort descending
+  // const sortedFiles = files.map(filename => {
+  //     return {
+  //         name: filename,
+  //         time: fs.statSync(path.join(imagesDir, filename)).mtime.getTime()
+  //     };
+  // }).sort((a, b) => b.time - a.time); // Sort descending
 
   // Get the latest file
-  if (sortedFiles.length === 0) {
-      console.error('No PNG files found in the images directory.');
-      return;
-  }
-  const latestFile = sortedFiles[0].name;
+  // if (sortedFiles.length === 0) {
+  //     console.error('No PNG files found in the images directory.');
+  //     return;
+  // }
+  // const latestFile = sortedFiles[0].name;
 
   // Prepare the payload
-  const filePath = path.join(imagesDir, latestFile);
-  const fileContent = fs.readFileSync(filePath);
+  // const filePath = path.join(imagesDir, latestFile);
+  // const fileContent = fs.readFileSync(filePath);
+	const screenshotBuffer = Buffer.from(screenshotBase64, 'base64')
   const formData = new FormData();
-  formData.append('file', fileContent, latestFile);
+	formData.append('file', screenshotBuffer, { filename: 'screenshot.png' });
 
 	try {
 		const response = await axios.post(webhookUrl, formData, {
