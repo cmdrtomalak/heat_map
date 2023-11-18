@@ -21,16 +21,10 @@ async function captureHeatMap(url) {
 
 		await driver.executeScript("window.scrollBy(0, 150)");
 
-		// let canvasElement = await driver.findElement(By.css('.chart'));
 		let canvasElement = await driver.wait(until.elementLocated(By.css('.chart')), 500);
 
 		let screenshot = await canvasElement.takeScreenshot();
 
-		// Save the screenshot to a file
-		// const now = new Date();
-		// const timestamp = now.toISOString().replace(/:/g, '-').replace('T', '-').split('.')[0];
-
-		// fs.writeFileSync(`images/SP_500_heatmap_${timestamp}.png`, screenshot, 'base64');
 		return screenshot;
 	}
 	finally {
@@ -39,39 +33,12 @@ async function captureHeatMap(url) {
 }
 
 async function sendLatestImage(chart_url, webhookUrl) {
+	// Get screenshot
 	let screenshotBase64 = await captureHeatMap(chart_url);
 
-  // const imagesDir = path.join(__dirname, 'images');
-
-  // Check if the 'images' directory exists
-  // if (!fs.existsSync(imagesDir)) {
-  //     console.error('Images directory does not exist.');
-  //     return;
-  // }
-
-  // Read the 'images' directory
-  // const files = fs.readdirSync(imagesDir).filter(file => file.endsWith('.png'));
-
-  // Sort files by creation time
-  // const sortedFiles = files.map(filename => {
-  //     return {
-  //         name: filename,
-  //         time: fs.statSync(path.join(imagesDir, filename)).mtime.getTime()
-  //     };
-  // }).sort((a, b) => b.time - a.time); // Sort descending
-
-  // Get the latest file
-  // if (sortedFiles.length === 0) {
-  //     console.error('No PNG files found in the images directory.');
-  //     return;
-  // }
-  // const latestFile = sortedFiles[0].name;
-
-  // Prepare the payload
-  // const filePath = path.join(imagesDir, latestFile);
-  // const fileContent = fs.readFileSync(filePath);
+	// Prepare the payload
 	const screenshotBuffer = Buffer.from(screenshotBase64, 'base64')
-  const formData = new FormData();
+	const formData = new FormData();
 	formData.append('file', screenshotBuffer, { filename: 'screenshot.png' });
 
 	try {
