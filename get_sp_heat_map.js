@@ -14,7 +14,7 @@ async function captureHeatMap(url) {
 	options.addArguments('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36');
 	options.windowSize({ width: 1920, height: 1280 });
 
-	driver = await new Builder().forBrowser('chrome').setChromeOptions(options).build();
+	driver = new Builder().forBrowser('chrome').setChromeOptions(options).build();
 
 	try {
 		await driver.get(url);
