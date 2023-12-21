@@ -81,22 +81,28 @@ async function capture10YrYield(url) {
 
 async function sendLatestImages(sp_500_chart_url, yieldurl, webhookUrl) {
 	// Get screenshot
-	let sp_500_screenshotBase64 = await captureHeatMap(sp_500_chart_url);
-	let yield_chart = await capture10YrYield(yieldurl);
+	let screenshotBase64 = await captureHeatMap(sp_500_chart_url);
 
-	if (!sp_500_screenshotBase64) {
+	if (!screenshotBase64) {
 		logger.error('Failed to capture S&P 500 screenshot.');
 		return;
 	}
+
+	await transmitDiscord(screenshotBase64, 'S&P 500', webhookUrl);
+
+	let yield_chart = await capture10YrYield(yieldurl);
 
 	if (!yield_chart) {
 		logger.error('Failed to capture 10Y Yield screenshot.');
 		return;
 	}
 
-	// Prepare the payload of S&P
-	const screenshotBuffer = Buffer.from(sp_500_screenshotBase64, 'base64')
-	logger.info('Screenshot buffer is ' + screenshotBuffer.length + ' long.')
+	await transmitDiscord(yield_chart, '10 Year Yield', webhookUrl);
+}
+
+async function transmitDiscord(payload, subject, webhookUrl) {
+	const screenshotBuffer = Buffer.from(payload, 'base64')
+	logger.info(`${subject} Screenshot buffer is ` + screenshotBuffer.length + ' long.')
 	if (screenshotBuffer.length < 100) {
 		logger.error('Screenshot buffer is too small, likely invalid.');
 		return;
@@ -109,29 +115,9 @@ async function sendLatestImages(sp_500_chart_url, yieldurl, webhookUrl) {
 		const response = await axios.post(webhookUrl, formData, {
 			headers: formData.getHeaders()
 		});
-		logger.info('S&P File sent successfully:', response.statusText);
+		logger.info(`${subject} File sent successfully:`, response.statusText);
 	} catch (error) {
-		logger.error('Error sending S&P file:', error.message);
-	}
-
-	// Prepare the payload of 10 Year Yield
-	const screenshotBuffer2 = Buffer.from(yield_chart, 'base64')
-	logger.info('Screenshot buffer is ' + screenshotBuffer2.length + ' long.')
-	if (screenshotBuffer2.length < 100) {
-		logger.error('Screenshot buffer is too small, likely invalid.');
-		return;
-	}
-
-	const formData2 = new FormData();
-	formData2.append('file', screenshotBuffer2, { filename: 'screenshot.png' });
-
-	try {
-		const response = await axios.post(webhookUrl, formData2, {
-			headers: formData2.getHeaders()
-		});
-		logger.info('10 Year Yield File sent successfully:', response.statusText);
-	} catch (error) {
-		logger.error('Error sending 10 Year Yield file:', error.message);
+		logger.error(`Error sending ${subject} file:`, error.message);
 	}
 }
 
