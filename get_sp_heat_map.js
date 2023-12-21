@@ -30,6 +30,8 @@ const logger = createLogger({
 class WebCapture {
 	constructor() {
 		this.driver = null;
+		this.canvasElement = null;
+		this.screenshot = null;
 	}
 
 	async initDriver(width, height) {
@@ -42,58 +44,34 @@ class WebCapture {
 		this.driver = await new Builder().forBrowser('chrome').setChromeOptions(options).build();
 	}
 
-	async captureSnpHeatMap(url) {
-		await this.initDriver(1280, 1080);
-
+	async capture(url, element, selector='id', sleep=0, wait=0, scroll=0, width=1280, height=1080) {
+		await this.initDriver(width, height);
 		try {
 			await this.driver.get(url);
 
-			await this.driver.executeScript("window.scrollBy(0, 150)");
+			if (sleep > 0) {
+				await this.driver.sleep(sleep);
+			}
 
-			let canvasElement = await this.driver.wait(until.elementLocated(By.css('.chart')), 500);
+			if (scroll > 0) {
+				await this.driver.executeScript(`window.scrollBy(0, ${scroll})`);
+			}
 
-			let screenshot = await canvasElement.takeScreenshot();
+			if (wait > 0 && selector == 'css') {
+				// let canvasElement = await this.driver.wait(until.elementLocated(By.css('.chart')), 500);
+				this.canvasElement = await this.driver.wait(until.elementLocated(By.css(element)), wait);
+			} else if (selector == 'css') {
+				this.canvasElement = await this.driver.findElement(By.css(element));
+			} else {
+				this.canvasElement = await this.driver.findElement(By.id(element));
+			}
 
-			return screenshot;
+			if (this.canvasElement) {
+				this.screenshot = await this.canvasElement.takeScreenshot();
+			}
+
+			return this.screenshot;
 		} catch (err) {
-			logger.error('Error during capture: ', err);
-		} finally {			await this.driver.quit();
-		}
-	}
-
-	async captureYield(url) {
-		await this.initDriver(1024, 768);
-
-		try {
-			await this.driver.get(url);
-			// await this.driver.manage().window().setRect(0, 0, 900, 800); // Resize the window
-
-			await this.driver.sleep(300);
-
-			let canvasElement = await this.driver.findElement(By.id('main-3-FullScreenChartIQ-Proxy'));
-
-			let screenshot = await canvasElement.takeScreenshot();
-
-			return screenshot;
-		} catch (err) {
-			logger.error('Error during capture: ', err);
-		} finally { 
-			await this.driver.quit();
-		}
-	}
-
-	async captureMortgage(url) {
-		await this.initDriver(1280, 1024);
-
-		try {
-			await this.driver.get(url);
-
-			let canvasElement = await this.driver.findElement(By.id('contentBody'));
-
-			let screenshot = await canvasElement.takeScreenshot();
-
-			return screenshot;
-		} catch(err) {
 			logger.error('Error during capture: ', err);
 		} finally {
 			await this.driver.quit();
@@ -125,7 +103,8 @@ async function sendLatestImages(sp_500_chart_url, yieldurl, mortgageUrl, webhook
 	// Get screenshot
 	const capture1 = new WebCapture();
 
-	let screenshotBase64 = await capture1.captureSnpHeatMap(sp_500_chart_url);
+	// let screenshotBase64 = await capture1.captureSnpHeatMap(sp_500_chart_url);
+	let screenshotBase64 = await capture1.capture(sp_500_chart_url, '.chart', 'css', wait=500, scroll=150);
 
 	if (!screenshotBase64) {
 		logger.error('Failed to capture S&P 500 screenshot.');
@@ -135,7 +114,9 @@ async function sendLatestImages(sp_500_chart_url, yieldurl, mortgageUrl, webhook
 	await transmitDiscord(screenshotBase64, 'S&P 500', webhookUrl);
 
 	const capture2 = new WebCapture();
-	let yield_chart = await capture2.captureYield(yieldurl);
+	// let yield_chart = await capture2.captureYield(yieldurl);
+	
+	let yield_chart = await capture2.capture(yieldurl, 'main-3-FullScreenChartIQ-Proxy', sleep=300, width=1024, height=768);
 
 	if (!yield_chart) {
 		logger.error('Failed to capture 10Y Yield screenshot.');
@@ -145,7 +126,8 @@ async function sendLatestImages(sp_500_chart_url, yieldurl, mortgageUrl, webhook
 	await transmitDiscord(yield_chart, '10 Year Yield', webhookUrl);
 
 	const capture3 = new WebCapture();
-	let mortgage = await capture3.captureMortgage(mortgageUrl);
+
+	let mortgage = await capture3.capture('https://www.wellsfargo.com/mortgage/rates/', 'contentBody')
 
 	if (!mortgage) {
 		logger.error('Failed to capture Mortgage screenshot.');
