@@ -32,18 +32,19 @@ class WebCapture {
 		this.driver = null;
 	}
 
-	async initDriver() {
-	let options = new chrome.Options();
+	async initDriver(width, height) {
+		let options = new chrome.Options();
 		options.addArguments('--headless');
 		options.addArguments('--disable-gpu');
 		options.addArguments('user-agent=Chrome/88.0.4324.150');
-		options.windowSize({ width: 1920, height: 1280 });
+		options.windowSize({ width, height });
 
 		this.driver = await new Builder().forBrowser('chrome').setChromeOptions(options).build();
-
 	}
 
 	async captureSnpHeatMap(url) {
+		await this.initDriver(1280, 1080);
+
 		try {
 			await this.driver.get(url);
 
@@ -56,10 +57,13 @@ class WebCapture {
 			return screenshot;
 		} catch (err) {
 			logger.error('Error during capture: ', err);
+		} finally {			await this.driver.quit();
 		}
 	}
 
 	async captureYield(url) {
+		await this.initDriver(1024, 768);
+
 		try {
 			await this.driver.get(url);
 			// await this.driver.manage().window().setRect(0, 0, 900, 800); // Resize the window
@@ -73,10 +77,13 @@ class WebCapture {
 			return screenshot;
 		} catch (err) {
 			logger.error('Error during capture: ', err);
+		} finally { 
+			await this.driver.quit();
 		}
 	}
 
 	async captureMortgage(url) {
+		await this.initDriver(1280, 1024);
 
 		try {
 			await this.driver.get(url);
@@ -85,21 +92,40 @@ class WebCapture {
 
 			let screenshot = await canvasElement.takeScreenshot();
 
-			// fs.writeFileSync('images/wells.png', screenshot, 'base64');
 			return screenshot;
 		} catch(err) {
 			logger.error('Error during capture: ', err);
+		} finally {
+			await this.driver.quit();
 		}
 	}
+
+	// async captureBloomberg(url) {
+	// 	await this.initDriver(1024, 768);
+
+	// 	try {
+	// 		await this.driver.get(url);
+
+	// 		let canvasElement = await this.driver.findElement(By.id('div[data-component="ticker-bar"]'));
+	// 		console.log("Hello, There");
+
+	// 		let screenshot = await canvasElement.takeScreenshot();
+
+	// 		return screenshot;
+	// 	} catch(err) {
+	// 		logger.error('Error during capture: ', err);
+	// 	} finally {
+	// 		await this.driver.quit();
+	// 	}
+	// }
 
 }
 
 async function sendLatestImages(sp_500_chart_url, yieldurl, mortgageUrl, webhookUrl) {
 	// Get screenshot
-	const captureInstance = new WebCapture();
-	await captureInstance.initDriver();
+	const capture1 = new WebCapture();
 
-	let screenshotBase64 = await captureInstance.captureSnpHeatMap(sp_500_chart_url);
+	let screenshotBase64 = await capture1.captureSnpHeatMap(sp_500_chart_url);
 
 	if (!screenshotBase64) {
 		logger.error('Failed to capture S&P 500 screenshot.');
@@ -108,7 +134,8 @@ async function sendLatestImages(sp_500_chart_url, yieldurl, mortgageUrl, webhook
 
 	await transmitDiscord(screenshotBase64, 'S&P 500', webhookUrl);
 
-	let yield_chart = await captureInstance.captureYield(yieldurl);
+	const capture2 = new WebCapture();
+	let yield_chart = await capture2.captureYield(yieldurl);
 
 	if (!yield_chart) {
 		logger.error('Failed to capture 10Y Yield screenshot.');
@@ -117,7 +144,8 @@ async function sendLatestImages(sp_500_chart_url, yieldurl, mortgageUrl, webhook
 
 	await transmitDiscord(yield_chart, '10 Year Yield', webhookUrl);
 
-	let mortgage = await captureInstance.captureMortgage(mortgageUrl);
+	const capture3 = new WebCapture();
+	let mortgage = await capture3.captureMortgage(mortgageUrl);
 
 	if (!mortgage) {
 		logger.error('Failed to capture Mortgage screenshot.');
@@ -126,6 +154,15 @@ async function sendLatestImages(sp_500_chart_url, yieldurl, mortgageUrl, webhook
 
 	await transmitDiscord(mortgage, 'Mortgage', webhookUrl);
 
+	// const capture4 = new WebCapture();
+	// let bloomberg = await capture4.captureBloomberg('https://www.bloomberg.com');
+
+	// if (!bloomberg) {
+	// 	logger.error('Failed to capture bloomberg screenshot.');
+	// 	return;
+	// }
+
+	// await transmitDiscord(bloomberg, 'Bloomberg', webhookUrl);
 }
 
 async function transmitDiscord(payload, subject, webhookUrl) {
