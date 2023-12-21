@@ -85,7 +85,7 @@ class WebCapture {
 
 			let screenshot = await canvasElement.takeScreenshot();
 
-			fs.writeFileSync('images/wells.png', screenshot, 'base64');
+			// fs.writeFileSync('images/wells.png', screenshot, 'base64');
 			return screenshot;
 		} catch(err) {
 			logger.error('Error during capture: ', err);
