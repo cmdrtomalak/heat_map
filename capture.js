@@ -18,7 +18,8 @@ class WebCapture {
 		options.addArguments('--headless');
 		options.addArguments('--disable-gpu');
 		// options.addArguments('user-agent=Chrome/117.0.6045.55');
-		let agent_str = `user-agent=Chrome/119.${this.getRand()}.${this.getRand()}.${this.getRand()}`;
+		let chrome_agent_str = `Chrome/119.${this.getRand()}.${this.getRand()}.${this.getRand()}`;
+		let agent_str = `user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) ${chrome_agent_str} Safari/537.36`;
 		options.addArguments(agent_str);
 		options.windowSize({ width, height });
 
@@ -28,7 +29,7 @@ class WebCapture {
 	async initDriver_headed(width, height) {
 		let options = new chrome.Options();
 		options.addArguments('--disable-gpu');
-		let agent_str = `user-agent=Chrome/119.${this.getRand()}.${this.getRand()}.${this.getRand()}`;
+		let agent_str = `user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) ${chrome_agent_str} Safari/537.36`;
 		options.addArguments(agent_str);
 		options.windowSize({ width, height });
 
