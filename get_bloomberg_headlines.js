@@ -13,7 +13,7 @@ async function sendLatestImages(webhookUrl) {
 	const capture = new WebCapture();
 	let [ticker, bloomberg] = await capture.captureBloomberg('https://www.bloomberg.com');
 
-	if (!bloomberg) {
+	if (!bloomberg || !ticker) {
 		logger.error('Failed to capture bloomberg screenshot.');
 		return;
 	}
@@ -55,4 +55,3 @@ sendLatestImages(webhook_url)
     logger.error('An error occurred:', error);
     process.exit(1); // Exits the process with an error code
 });
-

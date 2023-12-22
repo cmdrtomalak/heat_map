@@ -9,11 +9,17 @@ class WebCapture {
 		this.screenshot = null;
 	}
 
+	getRand() {
+		return Math.floor(Math.random() * 999) + 1;
+	}
+
 	async initDriver(width, height) {
 		let options = new chrome.Options();
 		options.addArguments('--headless');
 		options.addArguments('--disable-gpu');
-		options.addArguments('user-agent=Chrome/117.0.6045.88');
+		// options.addArguments('user-agent=Chrome/117.0.6045.55');
+		let agent_str = `user-agent=Chrome/119.${this.getRand()}.${this.getRand()}.${this.getRand()}`;
+		options.addArguments(agent_str);
 		options.windowSize({ width, height });
 
 		this.driver = await new Builder().forBrowser('chrome').setChromeOptions(options).build();
@@ -22,7 +28,8 @@ class WebCapture {
 	async initDriver_headed(width, height) {
 		let options = new chrome.Options();
 		options.addArguments('--disable-gpu');
-		options.addArguments('user-agent=Chrome/117.0.6045.88');
+		let agent_str = `user-agent=Chrome/119.${this.getRand()}.${this.getRand()}.${this.getRand()}`;
+		options.addArguments(agent_str);
 		options.windowSize({ width, height });
 
 		this.driver = await new Builder().forBrowser('chrome').setChromeOptions(options).build();
@@ -64,13 +71,14 @@ class WebCapture {
 	}
 
 	async captureBloomberg(url) {
-		await this.initDriver(1000, 2080);
+		await this.initDriver(1200, 1800);
 
 		try {
 			await this.driver.get(url);
 
-			console.log(await this.driver.getTitle());
+			logger.info(await this.driver.getTitle());
 
+			// await this.driver.sleep(20000);
 			// await this.driver.sleep(20000);
 			let canvasElement = await this.driver.findElement(By.css('div[data-component="ticker-bar"]'));
 

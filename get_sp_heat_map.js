@@ -1,6 +1,4 @@
 #!/usr/bin/env node
-// const {Builder, By, until} = require('selenium-webdriver');
-// const chrome = require('selenium-webdriver/chrome');
 const WebCapture = require('./capture');
 const fs = require('fs');
 const path = require('path');
@@ -45,16 +43,6 @@ async function sendLatestImages(sp_500_chart_url, yieldurl, mortgageUrl, webhook
 	}
 
 	await transmitDiscord(mortgage, 'Mortgage', webhookUrl);
-
-	// const capture4 = new WebCapture();
-	// let bloomberg = await capture4.captureBloomberg('https://www.bloomberg.com');
-
-	// if (!bloomberg) {
-	// 	logger.error('Failed to capture bloomberg screenshot.');
-	// 	return;
-	// }
-
-	// await transmitDiscord(bloomberg, 'Bloomberg', webhookUrl);
 }
 
 async function transmitDiscord(payload, subject, webhookUrl) {
