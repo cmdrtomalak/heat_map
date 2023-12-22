@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 const WebCapture = require('./capture');
-const fs = require('fs');
-const path = require('path');
+// const fs = require('fs');
+// const path = require('path');
 const axios = require('axios');
 const FormData = require('form-data');
 const logger = require('./logging');
 require('dotenv').config();
 
-async function sendLatestImages(sp_500_chart_url, yieldurl, mortgageUrl, webhookUrl) {
+async function sendLatestImages(sp_500_chart_url, webhookUrl) {
 	// Get screenshot
 	const capture1 = new WebCapture();
 
@@ -20,29 +20,6 @@ async function sendLatestImages(sp_500_chart_url, yieldurl, mortgageUrl, webhook
 	}
 
 	await transmitDiscord(screenshotBase64, 'S&P 500', webhookUrl);
-
-	const capture2 = new WebCapture();
-	// let yield_chart = await capture2.captureYield(yieldurl);
-	
-	let yield_chart = await capture2.capture(yieldurl, 'main-3-FullScreenChartIQ-Proxy', sleep=300, width=1024, height=768);
-
-	if (!yield_chart) {
-		logger.error('Failed to capture 10Y Yield screenshot.');
-		return;
-	}
-
-	await transmitDiscord(yield_chart, '10 Year Yield', webhookUrl);
-
-	const capture3 = new WebCapture();
-
-	let mortgage = await capture3.capture('https://www.wellsfargo.com/mortgage/rates/', 'contentBody')
-
-	if (!mortgage) {
-		logger.error('Failed to capture Mortgage screenshot.');
-		return;
-	}
-
-	await transmitDiscord(mortgage, 'Mortgage', webhookUrl);
 }
 
 async function transmitDiscord(payload, subject, webhookUrl) {
@@ -71,10 +48,10 @@ logger.info('Webhook: ' + process.env.WEBHOOK_URL);
 
 
 let spUrl = 'https://finviz.com/map.ashx?t=sec';
-let YFinance10YrYieldUrl = 'https://finance.yahoo.com/chart/%5ETNX';
-let mortgageUrl = 'https://www.wellsfargo.com/mortgage/rates/'
+// let YFinance10YrYieldUrl = 'https://finance.yahoo.com/chart/%5ETNX';
+// let mortgageUrl = 'https://www.wellsfargo.com/mortgage/rates/'
 // let _ = capture10YrYield(mortgageUrl);
-sendLatestImages(spUrl, YFinance10YrYieldUrl, mortgageUrl, webhook_url)
+sendLatestImages(spUrl, webhook_url)
 .then(() => {
     logger.info('Operation completed, exiting script.');
     process.exit(0); // Exits the process successfully
@@ -84,3 +61,4 @@ sendLatestImages(spUrl, YFinance10YrYieldUrl, mortgageUrl, webhook_url)
     process.exit(1); // Exits the process with an error code
 });
 
+module.exports = transmitDiscord;
