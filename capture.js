@@ -1,5 +1,6 @@
 const {Builder, By, until} = require('selenium-webdriver');
 const chrome = require('selenium-webdriver/chrome');
+const logger = require('./logging');
 
 class WebCapture {
 	constructor() {
@@ -12,11 +13,21 @@ class WebCapture {
 		let options = new chrome.Options();
 		options.addArguments('--headless');
 		options.addArguments('--disable-gpu');
-		options.addArguments('user-agent=Chrome/88.0.4324.150');
+		options.addArguments('user-agent=Chrome/117.0.6045.88');
 		options.windowSize({ width, height });
 
 		this.driver = await new Builder().forBrowser('chrome').setChromeOptions(options).build();
 	}
+
+	async initDriver_headed(width, height) {
+		let options = new chrome.Options();
+		options.addArguments('--disable-gpu');
+		options.addArguments('user-agent=Chrome/117.0.6045.88');
+		options.windowSize({ width, height });
+
+		this.driver = await new Builder().forBrowser('chrome').setChromeOptions(options).build();
+	}
+
 
 	async capture(url, element, selector='id', sleep=0, wait=0, scroll=0, width=1280, height=1080) {
 		await this.initDriver(width, height);
@@ -53,16 +64,15 @@ class WebCapture {
 	}
 
 	async captureBloomberg(url) {
-		await this.initDriver(800, 2080);
+		await this.initDriver(1000, 2080);
 
 		try {
 			await this.driver.get(url);
 
-			// console.log(await this.driver.getTitle());
+			console.log(await this.driver.getTitle());
 
+			// await this.driver.sleep(20000);
 			let canvasElement = await this.driver.findElement(By.css('div[data-component="ticker-bar"]'));
-			// let canvasElement = await this.driver.findElement(By.css('.zones_zones__YedWY .undefined'));
-			// let canvasElement = await this.driver.findElement(By.css('div.zones_zones__YedWY'));
 
 			let screenshot1 = await canvasElement.takeScreenshot();
 
@@ -70,7 +80,7 @@ class WebCapture {
 
 			let screenshot2 = await canvasElement.takeScreenshot();
 
-			return screenshot2;
+			return [screenshot1, screenshot2];
 		} catch(err) {
 			logger.error('Error during capture: ', err);
 		} finally {

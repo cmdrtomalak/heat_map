@@ -3,40 +3,22 @@ const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
 const FormData = require('form-data');
-const { createLogger, format, transports } = require('winston');
+const logger = require('./logging');
 const WebCapture = require('./capture')
-require('winston-daily-rotate-file');
 require('dotenv').config();
-
-// Configure Winston Logger for Weekly Rotation
-const logger = createLogger({
-	format: format.combine(
-		format.timestamp(),
-		format.json()
-	),
-	transports: [
-		new transports.DailyRotateFile({
-			filename: 'logs/heat-map-%DATE%.log',
-			datePattern: 'YYYY-MM-DD',
-			frequency: 'weekly',
-			zippedArchive: true,
-			maxSize: '20m',
-			maxFiles: '4'
-		})
-	]
-});
 
 async function sendLatestImages(webhookUrl) {
 	// Get screenshot
 
 	const capture = new WebCapture();
-	let bloomberg = await capture.captureBloomberg('https://www.bloomberg.com');
+	let [ticker, bloomberg] = await capture.captureBloomberg('https://www.bloomberg.com');
 
 	if (!bloomberg) {
 		logger.error('Failed to capture bloomberg screenshot.');
 		return;
 	}
 
+	await transmitDiscord(ticker, 'Bloomberg Ticker', webhookUrl);
 	await transmitDiscord(bloomberg, 'Bloomberg', webhookUrl);
 }
 

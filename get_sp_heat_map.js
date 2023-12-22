@@ -6,27 +6,8 @@ const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
 const FormData = require('form-data');
-const { createLogger, format, transports } = require('winston');
-require('winston-daily-rotate-file');
+const logger = require('./logging');
 require('dotenv').config();
-
-// Configure Winston Logger for Weekly Rotation
-const logger = createLogger({
-	format: format.combine(
-		format.timestamp(),
-		format.json()
-	),
-	transports: [
-		new transports.DailyRotateFile({
-			filename: 'logs/heat-map-%DATE%.log',
-			datePattern: 'YYYY-MM-DD',
-			frequency: 'weekly',
-			zippedArchive: true,
-			maxSize: '20m',
-			maxFiles: '4'
-		})
-	]
-});
 
 async function sendLatestImages(sp_500_chart_url, yieldurl, mortgageUrl, webhookUrl) {
 	// Get screenshot
